@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ACRB – Fiche commerçant rue de Brabant</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap">
 <style>
 :root{
   --bg:#f6f4ef; --card:#ffffff; --fg:#1d1b17; --muted:#6a655c; --line:#dcd7cc;
   --accent:#9b3a2a; --accent-fg:#ffffff; --err:#b42318; --field:#fbfaf7; --soft:#f7ebe8;
-  --display:"DM Serif Display",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif;
+  --display:"Libre Franklin","Helvetica Neue",Arial,sans-serif; --body:"Source Sans 3","Segoe UI",Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);padding:0 max(16px,env(safe-area-inset-left,0px)) 64px max(16px,env(safe-area-inset-right,0px))}
-html[dir=rtl] body{font-family:"Noto Naskh Arabic","IBM Plex Sans",system-ui,sans-serif;font-size:17px}
+html[dir=rtl] body{font-family:"Noto Naskh Arabic","Source Sans 3",system-ui,sans-serif;font-size:17px}
 html[dir=rtl] h1,html[dir=rtl] .card h2,html[dir=rtl] .done h2{font-family:"Noto Naskh Arabic",serif;font-weight:600}
 .wrap{max-width:720px;margin:0 auto}
 .langs{display:flex;flex-wrap:wrap;gap:6px;padding-top:16px}
@@ -23,10 +23,10 @@ html[dir=rtl] h1,html[dir=rtl] .card h2,html[dir=rtl] .done h2{font-family:"Noto
 header{padding:24px 0}
 .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
 html[dir=rtl] .eyebrow{letter-spacing:0}
-h1{font:400 clamp(30px,6vw,42px)/1.15 var(--display);margin:8px 0 12px;text-wrap:balance}
+h1{font:800 clamp(28px,5.5vw,38px)/1.12 var(--display);letter-spacing:-.02em;margin:8px 0 12px;text-wrap:balance}
 header p{margin:0;color:var(--muted);max-width:60ch}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px;margin-top:18px}
-.card h2{font:400 24px/1.2 var(--display);margin:0 0 4px}
+.card h2{font:700 21px/1.2 var(--display);margin:0 0 4px}
 .card .hint{color:var(--muted);font-size:14px;margin:0 0 18px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
 .grid .full{grid-column:1/-1}
@@ -67,7 +67,7 @@ details .grid,details .days{margin-top:12px}
 .msg{margin-top:14px;padding:12px 14px;border-radius:8px;font-size:14px;display:none}
 .msg.err{display:block;background:#fdeceb;color:var(--err)}
 .done{text-align:center;padding:48px 24px}
-.done h2{font:400 32px/1.1 var(--display);margin:0 0 10px}
+.done h2{font:800 26px/1.15 var(--display);margin:0 0 10px}
 .done p{color:var(--muted)}
 .hp{position:absolute;left:-9999px}
 .lookup{display:flex;gap:8px;margin-top:10px}.lookup input{flex:1}.lookup button{padding:10px 14px;border:0;border-radius:8px;background:var(--accent);color:var(--accent-fg);font-weight:600;white-space:nowrap}
