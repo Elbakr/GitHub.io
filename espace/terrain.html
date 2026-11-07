@@ -32,7 +32,8 @@ label.l{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;text-t
 .acts{display:grid;gap:10px;margin-top:18px}
 .big{width:100%;border:0;border-radius:14px;padding:16px;font-size:18px;font-weight:800;background:var(--green);color:#fff;display:flex;justify-content:center;gap:10px;align-items:center}
 .big.save{background:var(--amber)}
-.sec{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sec button:nth-child(3):last-child{grid-column:1/-1}
+.others{display:grid;gap:6px}.oth{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px}.oth small{display:block;color:var(--muted);font-size:12.5px}.oth button{border:1px solid #f0d2cd;background:#fff;color:var(--red);border-radius:8px;padding:7px 10px;font-weight:700;font-size:13px;white-space:nowrap}.oth button.back{color:var(--green);border-color:#bfe3cc}
 .sec button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;font-weight:700;font-size:14px}
 .sec button.bad{color:var(--red);border-color:#f0d2cd}
 details{margin-top:14px}summary{font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
@@ -73,6 +74,11 @@ textarea{width:100%;min-height:70px;border:1px solid var(--line);border-radius:1
 <input type="range" id="ray" min="300" max="1500" step="50" style="width:100%"><div style="display:flex;justify-content:space-between;font-weight:800;margin:6px 0 12px"><span id="rayv"></span><span id="raycnt" style="color:var(--muted);font-weight:700"></span></div>
 <div id="raystreets" style="font-size:13px;color:var(--muted);margin-bottom:14px"></div>
 <button class="big" id="raysave">Enregistrer le rayon</button></div></div>
+<div class="sheet" id="movesheet"><div class="in"><h3>Déménagement</h3><p style="font-size:14px;color:var(--muted);margin:0 0 10px" id="mv_from"></p>
+<label class="l">Nouvelle adresse</label><select id="mv_rue" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;margin-bottom:8px"></select>
+<input id="mv_num" type="number" inputmode="numeric" placeholder="Nouveau numéro" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;margin-bottom:12px">
+<div class="hintt" style="margin:0 0 12px">Dans le quartier : le commerce apparaît au nouveau numéro sur le site. Hors du quartier : il est retiré du site.</div>
+<button class="big" id="mv_ok">Enregistrer le déménagement</button></div></div>
 <div class="toast" id="toast"></div>
 <script>
 var SB="https://blaehmatdmobhwlhqfjo.supabase.co",KEY="sb_publishable_c1ovcVD1pbOGPedrJfDU3g_jtS1bY73",JWT="";
@@ -87,6 +93,10 @@ function nameOf(s){var v=V[s.id];return (v&&v.enseigne_v)||s.n;}
 function catOf(s){var v=V[s.id];return (v&&v.cat_v&&CATS[v.cat_v])?v.cat_v:s.cat;}
 function vitOf(s){var v=V[s.id];return (v&&typeof v.vitrine_v==="boolean")?v.vitrine_v:s.v;}
 function isDone(s){var v=V[s.id];return !!(v&&v.valide_le);}
+function statOf(s){var v=V[s.id];return (v&&v.statut_v)||"ouvert";}
+var STAT={ouvert:"Ouvert",ferme:"Fermé / parti",remplace:"Remplacé",demenage:"Déménagé",absent:"Plus à cette adresse (déclaré par l'exploitant)"};
+function sameAddr(s){return SHOPS.filter(function(x){return x.id!==s.id&&x.rk===s.rk&&x.num===s.num&&x.cp===s.cp;});}
+function streetLabel(k){var f=SHOPS.filter(function(s){return s.rk===k;})[0];return f?f.rue:k;}
 function dist(a,b){var R=6371000,dl=(b[0]-a[0])*Math.PI/180,dn=(b[1]-a[1])*Math.PI/180,x=Math.sin(dl/2),y=Math.sin(dn/2);var h=x*x+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*y*y;return 2*R*Math.asin(Math.sqrt(h));}
 function inRay(s,r){return !s.ll||dist(CENTER,s.ll)<=(r||RAYON);}
 function pool(){
@@ -108,9 +118,11 @@ function render(){
    '<label class="l" for="ens">Enseigne, telle qu\'écrite sur la façade</label><input class="ens" id="ens" value="'+esc(nameOf(s))+'" autocomplete="off" autocapitalize="characters" enterkeyhint="done">'+
    '<div class="hintt">Corrigez directement si ce n\'est pas ce qui est écrit sur la vitrine.</div>'+
    '<label class="l">Rubrique et vitrine</label><div class="chips"><button class="chip" id="catbtn"><i style="background:'+COLORS[c]+'"></i>'+esc(CATS[c])+' ▾</button><button class="chip" id="vit" aria-pressed="'+(vitOf(s)?"true":"false")+'">'+(vitOf(s)?"Vitrine ouverte au public":"Pas de vitrine (bureau, atelier…)")+'</button></div>'+
-   '<div class="kv"><span>Société : <b>'+esc(s.soc)+'</b>'+(s.y?' · depuis '+s.y:'')+'</span>'+(s.acts[0]?'<span>BCE : '+esc(s.acts[0])+'</span>':'')+(ME&&s.ll?'<span>À '+Math.round(dist(ME,s.ll))+' m</span>':'')+'</div>'+
+   '<div class="kv"><span>Société : <b>'+esc(s.soc)+'</b>'+(s.y?' · depuis '+s.y:'')+'</span>'+(s.acts[0]?'<span>BCE : '+esc(s.acts[0])+'</span>':'')+(ME&&s.ll?'<span>À '+Math.round(dist(ME,s.ll))+' m</span>':'')+
+   (statOf(s)!=="ouvert"?'<span style="color:var(--red)">Statut : <b>'+esc(STAT[statOf(s)]||statOf(s))+'</b>'+(v.numero_v?' → '+esc(streetLabel(v.rue_v)||v.rue_v)+' '+v.numero_v:'')+(v.note_v?' · '+esc(v.note_v):'')+'</span>':'')+'</div>'+
+   (function(){var o=sameAddr(s);if(!o.length)return "";return '<label class="l">Autres établissements à ce numéro ('+o.length+')</label><div class="others">'+o.map(function(x){var st=statOf(x);return '<div class="oth"><span><b>'+esc(nameOf(x))+'</b><small>'+esc(x.soc)+(st!=="ouvert"?' · <i>'+esc(STAT[st]||st)+'</i>':'')+'</small></span>'+(st==="ouvert"?'<button type="button" class="gone" data-id="'+x.id+'">Plus ici</button>':'<button type="button" class="back" data-id="'+x.id+'">Rétablir</button>')+'</div>';}).join("")+'<div class="hintt">« Plus ici » retire du site un établissement qui n\'est plus à cette adresse. Les numéros avec deux commerces réels (ex. 93) restent possibles : ne retirez que ce qui a disparu.</div></div>';})()+
    '<div class="acts"><button class="big" id="ok">✓ C\'est correct</button>'+
-   '<div class="sec"><button class="bad" id="closed">⛔ Fermé / parti</button><button class="bad" id="replaced">↻ Autre commerce ici</button></div></div>'+
+   '<div class="sec"><button class="bad" id="closed">⛔ Fermé / parti</button><button class="bad" id="replaced">↻ Autre commerce ici</button><button class="bad" id="moved">➜ Déménagé</button>'+(statOf(s)!=="ouvert"?'<button id="reopen" style="color:var(--green);border-color:#bfe3cc">↺ Rétablir (ouvert ici)</button>':'')+'</div></div>'+
    '<details><summary>Remarque (facultatif)</summary><textarea id="note" placeholder="Ex. : horaires affichés 10h–19h, enseigne en travaux…"></textarea></details>'+
    '<div class="nav"><button id="prev">‹ Précédent</button><span>'+(idx+1)+' / '+arr.length+'</span><button id="next">Passer ›</button></div></div>';
   var ens=document.getElementById("ens"),ok=document.getElementById("ok");
@@ -121,19 +133,28 @@ function render(){
   ok.addEventListener("click",function(){save(s,"ouvert");});
   document.getElementById("closed").addEventListener("click",function(){if(confirm("Ce commerce est fermé ou parti ? Il sera retiré du site."))save(s,"ferme");});
   document.getElementById("replaced").addEventListener("click",function(){var n=prompt("Enseigne du commerce qui occupe l'adresse maintenant :");if(n&&n.trim()){document.getElementById("note").value=("Remplacé par : "+n.trim()+"\n"+document.getElementById("note").value).trim();save(s,"remplace");}});
+  document.getElementById("moved").addEventListener("click",function(){openMove(s);});
+  var ro=document.getElementById("reopen");if(ro)ro.addEventListener("click",function(){save(s,"ouvert");});
+  Array.prototype.forEach.call(document.querySelectorAll(".others .gone"),function(b){b.addEventListener("click",function(){var x=SHOPS.filter(function(y){return y.id===b.dataset.id;})[0];if(x&&confirm("« "+nameOf(x)+" » n'est plus au "+s.rue+" "+s.num+" ? Il sera retiré du site."))saveOther(x,"ferme","Plus à cette adresse (constaté sur place)");});});
+  Array.prototype.forEach.call(document.querySelectorAll(".others .back"),function(b){b.addEventListener("click",function(){var x=SHOPS.filter(function(y){return y.id===b.dataset.id;})[0];if(x)saveOther(x,"ouvert","Rétabli");});});
   document.getElementById("prev").addEventListener("click",function(){idx--;render();});
   document.getElementById("next").addEventListener("click",function(){idx++;render();});
 }
 var pendingCat=null;
 function openSheet(s){var g=document.getElementById("catgrid");g.innerHTML=Object.keys(CATS).map(function(k){return '<button data-k="'+k+'"><i style="background:'+COLORS[k]+'"></i>'+esc(CATS[k])+'</button>';}).join("");g.onclick=function(e){var b=e.target.closest("button");if(!b)return;pendingCat=b.dataset.k;var cb=document.getElementById("catbtn");cb.innerHTML='<i style="background:'+COLORS[pendingCat]+'"></i>'+esc(CATS[pendingCat])+' ▾';cb.dataset.changed="1";document.getElementById("sheet").classList.remove("on");};document.getElementById("sheet").classList.add("on");}
 document.getElementById("sheet").addEventListener("click",function(e){if(e.target===this)this.classList.remove("on");});
+var MOVE=null;
+function saveOther(x,statut,note){fetch(SB+"/rest/v1/rpc/acrb_valider2",{method:"POST",headers:H(),body:JSON.stringify({p_code:code,p_ue:x.id,p_par:nom,p_statut:statut,p_note:note})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.message||r.status);return j;});}).then(function(j){var v=V[x.id]=V[x.id]||{};v.statut_v=statut;v.valide_le=j.valide_le;v.valide_par=nom;v.note_v=note;toast(statut==="ouvert"?"Rétabli":"Retiré du site");render();}).catch(function(e){toast("Échec : "+e.message,true);});}
+function openMove(s){var sh=document.getElementById("movesheet");document.getElementById("mv_from").textContent=nameOf(s)+" · "+s.rue+" "+s.num;var st=document.getElementById("mv_rue");st.innerHTML=STREETS.map(function(k){var f=SHOPS.filter(function(x){return x.rk===k;})[0];return f?'<option value="'+k+'" data-cp="'+f.cp+'">'+esc(f.rue)+'</option>':"";}).join("")+'<option value="">Hors du quartier / inconnu</option>';st.value=s.rk;document.getElementById("mv_num").value="";sh.classList.add("on");
+  document.getElementById("mv_ok").onclick=function(){var rk=st.value,num=parseInt(document.getElementById("mv_num").value,10);if(rk&&!(num>0))return toast("Indiquez le nouveau numéro",true);var cp=rk?st.selectedOptions[0].dataset.cp:null;MOVE={rue:rk||null,numero:rk?num:null,cp:cp};document.getElementById("note").value=("Déménagé vers "+(rk?streetLabel(rk)+" "+num:"hors du quartier")+"\n"+document.getElementById("note").value).trim();sh.classList.remove("on");save(s,"demenage");};}
 function save(s,statut){
   var ens=document.getElementById("ens").value.trim()||nameOf(s),vitb=document.getElementById("vit"),note=document.getElementById("note").value.trim()||null;
   var body={p_code:code,p_ue:s.id,p_par:nom,p_enseigne:ens,p_statut:statut,p_note:note};
+  if(statut==="demenage"&&MOVE){body.p_rue=MOVE.rue;body.p_numero=MOVE.numero;body.p_cp=MOVE.cp;}
   if(pendingCat)body.p_cat=pendingCat;if(vitb.dataset.changed)body.p_vitrine=(vitb.getAttribute("aria-pressed")==="true");
   var ok=document.getElementById("ok");ok.disabled=true;ok.textContent="…";
-  fetch(SB+"/rest/v1/rpc/acrb_valider",{method:"POST",headers:H(),body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.message||r.status);return j;});})
-  .then(function(j){var v=V[s.id]=V[s.id]||{};v.enseigne_v=ens;if(body.p_cat)v.cat_v=body.p_cat;if("p_vitrine" in body)v.vitrine_v=body.p_vitrine;v.statut_v=statut;v.valide_le=j.valide_le;v.valide_par=nom;pendingCat=null;
+  fetch(SB+"/rest/v1/rpc/acrb_valider2",{method:"POST",headers:H(),body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.message||r.status);return j;});})
+  .then(function(j){var v=V[s.id]=V[s.id]||{};v.enseigne_v=ens;if(body.p_cat)v.cat_v=body.p_cat;if("p_vitrine" in body)v.vitrine_v=body.p_vitrine;v.statut_v=statut;v.valide_le=j.valide_le;v.valide_par=nom;v.note_v=note;if(statut==="demenage"&&MOVE){v.rue_v=MOVE.rue;v.numero_v=MOVE.numero;}if(statut==="ouvert"){v.rue_v=null;v.numero_v=null;}MOVE=null;pendingCat=null;
     toast(statut==="ouvert"?"✓ Enregistré":"Enregistré · retiré du site");if(!todoOnly)idx++;render();})
   .catch(function(e){ok.disabled=false;ok.textContent="Réessayer";toast("Échec : "+e.message,true);});
 }
@@ -141,7 +162,7 @@ function loadSettings(){return fetch(SB+"/rest/v1/acrb_reglages?select=cle,valeu
 function rayInfo(r){var inn=SHOPS.filter(function(s){return s.v&&inRay(s,r);});document.getElementById("rayv").textContent=r+" m";document.getElementById("raycnt").textContent=inn.length+" commerces avec vitrine";
   document.getElementById("raystreets").innerHTML=STREETS.map(function(k){var all=SHOPS.filter(function(s){return s.rk===k&&s.v;}),n=all.filter(function(s){return inRay(s,r);}).length;if(!all.length)return "";return '<div>'+esc(all[0].rue)+' : <b>'+n+'</b> / '+all.length+'</div>';}).join("");}
 function load(){
-  return fetch(SB+"/rest/v1/acrb_bce?select=ue,masque,enseigne_v,cat_v,statut_v,vitrine_v,valide_le,valide_par&or=(masque.eq.true,valide_le.not.is.null)",{headers:H()}).then(function(r){return r.json();}).then(function(rows){rows.forEach(function(r){V[String(r.ue).replace(/\D/g,"")]=r;});});
+  return fetch(SB+"/rest/v1/acrb_bce?select=ue,masque,enseigne_v,cat_v,statut_v,vitrine_v,valide_le,valide_par,note_v,rue_v,numero_v&or=(masque.eq.true,valide_le.not.is.null)",{headers:H()}).then(function(r){return r.json();}).then(function(rows){rows.forEach(function(r){V[String(r.ue).replace(/\D/g,"")]=r;});});
 }
 function start(){
   document.getElementById("gate").hidden=true;document.getElementById("app").hidden=false;
