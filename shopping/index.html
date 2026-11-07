@@ -307,7 +307,7 @@ function render(){
   list.innerHTML=n?out.join(""):'<p class="empty">'+T.empty+'</p>';
   var mb=document.getElementById("more");if(mb)mb.addEventListener("click",function(){window.__lim=(window.__lim||72)+72;render();});
   var known=SHOPS.filter(function(x){return x.f&&x.f.horaires_json;}).length;
-  cnt.textContent=n+" "+(n>1?T.found:T.found1)+(onlyOpen?" · "+T.hours_known.replace("{n}",known):"");
+  cnt.textContent=total+" "+(total>1?T.found:T.found1)+(onlyOpen?" · "+T.hours_known.replace("{n}",known):"");
   drawMarkers(arr);
 }
 /* carte */
